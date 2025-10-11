@@ -1,30 +1,79 @@
-# Fraud-Detection
-# PROBELM OVERVIEW 
-  In today’s digital economy, mobile money transactions have become an essential financial service, especially in developing regions where traditional banking infrastructure is limited. However, the growing volume of digital payments has also led to a rise in fraudulent activities, such as unauthorized transfers and cash-out scams. These fraudulent transactions not only cause financial losses but also erode customer trust in mobile payment systems.
+# Fraud Detection — PaySim (Synthetic) Analysis
 
-The PaySim dataset simulates real-world mobile money transactions to help identify fraudulent behavior patterns. The core problem is a binary classification task: determining whether a given transaction is fraudulent (1) or legitimate (0) based on its features such as transaction type, amount, balances, and user IDs.
-# 1. DATASET AND IMPORTS 
+Project
+- Exploratory Data Analysis (EDA) and initial investigation to support fraud detection modeling on the PaySim synthetic mobile-money transaction dataset.
+- Notebook: [Code.ipynb](Code.ipynb) — runs the full analysis and contains the code referenced below.
+- Dataset: [Dataset.csv](Dataset.csv)
 
- - Dataset: https://www.kaggle.com/datasets/ealaxi/paysim1
+Quick links to workspace symbols
+- Notebook DataFrame: [`df`](Code.ipynb)  
+- Target variable detection: [`target`](Code.ipynb)  
+- Visualization sample features: [`selected_features`](Code.ipynb)  
+- Time feature created from step: [`df['hour']`](Code.ipynb)  
+- Hourly aggregated fraud rate series: [`fraud_by_hour`](Code.ipynb)
 
- - The PaySim dataset is a synthetic set of financial transaction records generated to simulate mobile money transactions and to support fraud detection research. The typical task is supervised classification: predict whether a transaction is fraudulent (isFraud) given transaction features (amount, sender/receiver balances, transaction type, etc.). The dataset is widely used to test anomaly/fraud detection models because it simulates real-world class imbalance and transaction patterns.
+Environment / Dependencies
+- Python 3.8+ (recommended)
+- pandas, numpy, matplotlib, seaborn, jupyterlab/notebook
+- Install with:
+  ```
+  pip install pandas numpy matplotlib seaborn jupyterlab
+  ```
 
-- Typical columns you’ll see in the CSV:
+How to run
+1. Open the repository folder and start Jupyter:
+   ```
+   jupyter lab
+   ```
+2. Open [Code.ipynb](Code.ipynb) and run cells top-to-bottom.
+3. Confirm [Dataset.csv](Dataset.csv) is in the same directory as the notebook.
 
-   1.tep — discrete time step (unit: hours) in the simulation.
-   2.type — transaction type, e.g. PAYMENT, TRANSFER, CASH_OUT, DEBIT, CASH_IN.
-   3.amount — transaction amount.
-   4.nameOrig — customer id of the originator.
-   5.oldbalanceOrg — initial balance of the originator before the transaction.
-   6.newbalanceOrig — balance of the originator after the transaction.
-   7.nameDest — customer id of the destination.
-   8.oldbalanceDest — initial balance of the destination before the transaction.
-   9.newbalanceDest — balance of the destination after the transaction.
-   10.isFraud — target label (1 for fraud, 0 otherwise).
-   11.isFlaggedFraud — indicates flagged fraud (rare; for example very large transfers flagged by the simulator).
+Notebook walkthrough (what I did, step-by-step)
+1. Imports and setup
+   - Imported standard EDA libraries (os, zipfile, Path, numpy, pandas, matplotlib, seaborn, Counter) in the first cell.
 
-- Data is loaded using Pandas, inspected for missing values, validated for consistency, and cleaned for further analysis.
+2. Load dataset
+   - Read the CSV into the DataFrame [`df`](Code.ipynb] via `pd.read_csv('Dataset.csv')`.
 
+3. Initial inspection
+   - Viewed first rows (`df.head(5)`), shape (`df.shape`), and `df.info()` for column types and non-null counts.
+   - Computed basic summary statistics with `df.describe()`.
 
+4. Identify features and target
+   - Determined `target = 'isFraud'` if present and built lists of categorical and numerical columns. See [`target`](Code.ipynb).
 
- 
+5. Missing values
+   - Checked missing value counts: `df.isnull().sum()` and printed any columns with missing data.
+
+6. Class imbalance check
+   - Computed counts and percentages for the target and plotted class distribution with `sns.countplot`. Observed heavy imbalance (frauds are rare).
+
+7. Numeric summary and distributions
+   - Displayed descriptive stats for numeric columns.
+   - Plotted histograms of numeric features to inspect skew and scale.
+   - Plotted boxplots for numeric features to highlight outliers.
+
+8. Correlation analysis
+   - Computed `corr = df[num_features].corr()` and plotted a heatmap with `sns.heatmap` to inspect pairwise relationships.
+
+9. Categorical EDA
+   - For each categorical column (detected as object/category), printed value counts and percentages. Displayed observations of dominant categories.
+
+10. Transaction type vs fraud
+    - If `type` exists, grouped by `type` and computed fraud rate: `type_fraud = df.groupby("type")["isFraud"].mean()`. Plotted a bar chart to highlight which transaction types have the highest fraud rates.
+
+11. Amount distribution vs fraud
+    - Used `sns.boxplot` to compare `amount` distribution across `isFraud` classes and set `plt.yscale("log")` to reveal differences across scales.
+
+12. Pairwise relationships (sample)
+    - Defined `selected_features` (see [`selected_features`](Code.ipynb)) and sampled 5,000 rows for performance. Created pairplots with `sns.pairplot(..., hue="isFraud")` to visualize multi-dimensional separation.
+
+13. Temporal analysis
+    - Converted simulation `step` (hours) to datetime: created [`df['hour']`](Code.ipynb) using `pd.to_datetime(df['step'], unit='h')`.
+    - Aggregated hourly fraud rate: [`fraud_by_hour`](Code.ipynb) = `df.groupby('hour')['isFraud'].mean()` and plotted the result to inspect when fraud occurs most.
+
+Key observations
+- The dataset is highly imbalanced — frauds are a tiny fraction of transactions.
+- Fraud rate differs by transaction `type` (e.g., `TRANSFER`, `CASH_OUT` typically higher).
+- Fraudulent transactions show different patterns in `amount` and balance change (use log scale to visualize).
+- Temporal aggregation (`fraud_by_hour`) can reveal hours with elevated fraud activity.
